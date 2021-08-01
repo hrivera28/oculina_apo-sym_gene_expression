@@ -1,4 +1,4 @@
-##<i>Oculina arbuscula</i> gene expression study between aposymbiotic and symbiotic branches
+## <i>Oculina arbuscula</i> gene expression study between aposymbiotic and symbiotic branches
 This repo contains the data and scripts associated with the manuscript: 
 Rivera, H.E. & Davies, S.W. (in prep) Symbiosis maintenance in the facultative coral <i>Oculina arbuscula</i> relies on nitrogen cycling, cell cycle modulation, and immunity
 
