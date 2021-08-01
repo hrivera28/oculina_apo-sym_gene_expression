@@ -1,0 +1,573 @@
+---
+title: "Gene expression analyses <i>Oculina arbuscula</i>"
+output: 
+  html_document:
+    theme: simplex
+    toc: yes
+    toc_float: yes
+    code_folding: hide 
+  pdf_document:
+    toc: yes
+---
+<style>
+  h2{color: teal !important}
+  h1{color: navy !important}
+  body{background-color: gray95 !important}
+</style>
+
+<br/>
+
+#### Hanny E. Rivera^1^*, Sarah W. Davies^1^
+
+^1^ Biology Department, Boston University, Boston, MA, USA
+
+\* Current address: Water Power Technologies Office, Department of Energy, Washington, DC
+<br/>
+
+##### **Citation:**
+Rivera, H.E. & Davies, S.W. Symbiosis maintenance in the facultative coral <i>Oculina arbuscula</i> relies on nitrogen cycling, cell cycle modulation, and immunity. 
+<br/>
+
+##### **Abstract:**
+Symbiosis with unicellular algae in the family Symbiodiniaceae is common across tropical marine invertebrates. Reef-building corals offer a clear example of cellular dysfunction that leads to a dysbiosis that disrupts entire ecosystems in a process termed coral bleaching. Due to their obligate symbiotic relationship, understanding the molecular underpinnings that sustain this symbiosis in tropical reef-building corals is challenging, as any aposymbiotic state is inherently coupled with severe physiological stress. Here, we leverage the subtropical, facultatively symbiotic and calcifying coral <i>Oculina arbuscula</i> to investigate gene expression differences between aposymbiotic and symbiotic host tissues within the same colonies under baseline conditions. We further compare gene ontology (GO) and KOG enrichment in gene expression patterns from <i>O. arbuscula</i> with prior work in the sea anemone <i>Exaiptasia pallida</i> (Aiptasia) and the salamander <i>Ambystoma maculatum</i> – both of which exhibit endophotosymbiosis with unicellular algae. We identify nitrogen cycling, cell cycle control, and immune responses as key pathways involved in the maintenance of symbiosis under baseline conditions. Understanding the mechanisms that sustain a healthy symbiosis between corals and Symbiodiniaceae algae is of urgent importance given the vulnerability of these partnerships to changing environmental conditions and their role in the continued functioning of critical and highly diverse marine ecosystems. 
+<br/>
+
+#### **Description:**
+This markdown contains code for analyzing gene expression count data. It includes differential gene expression analyses using DESeq2, other visualization of data such PCAs and heat maps, functional analysis using GO and KOG enrichment. Code used to generate the outputs in each section can be viewed by clicking on the code button that appears on the far right next to each section title. Figures that appear in the final manuscript are numbered as such in this markdown document. All other figures are included for transparency and/or because they may support decisions taking at other steps.
+<br/>
+
+## Setup
+Loads all necessary R packages. See session info at end of document for version information. 
+
+<br/>
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE, message=FALSE, warning=FALSE, error=FALSE, eval=FALSE, results="hide")
+knitr::opts_knit$set(root.dir="/Users/hannyrivera/Documents/BU/DaviesLab/_Data/Oculina/Mapped_counts.nosync/Coral_collapsed_transc_best_map/")
+library(htmltools)
+library(arrayQualityMetrics)
+library(DESeq)
+library(DESeq2)
+library(tidyr)
+library(genefilter)
+library(cowplot)
+library(readr)
+library(gplots)
+library(reshape2)
+library(plyr)
+library(dplyr)
+library(apeglm)
+library(IHW)
+library(pheatmap)
+library(vsn)
+library(ggplot2)
+library(ggpubr)
+library(ggtext)
+library(ape)
+library(vegan)
+library(RColorBrewer)
+library(stringr)
+library(KOGMWU)
+```
+
+
+## Importing counts data and preparing for analyses
+Brings in counts of contigs mapping to <i>Oculina arbuscula</i> transcriptome. For more information on steps to generate counts see manuscript methods and scripts in first author's github repository: https://github.com/hrivera28/
+<br/>
+```{r 'Read in sample counts and make matrix'}
+#Read in sample metadata
+coldata<-read.table("Samp_data.txt", header=TRUE)
+rownames(coldata)<-coldata$Samp
+coldata<-coldata[,2:3]
+
+OCAA<-read.table("./sam_counts/OCAA_coral_sam.counts")
+OCBA<-read.table("./sam_counts/OCBA_coral_sam.counts")
+OCCA<-read.table("./sam_counts/OCCA_coral_sam.counts")
+OCDA<-read.table("./sam_counts/OCDA_coral_sam.counts")
+OCFA<-read.table("./sam_counts/OCFA_coral_sam.counts")
+
+OCAS<-read.table("./sam_counts/OCAS_coral_sam.counts")
+OCBS<-read.table("./sam_counts/OCBS_coral_sam.counts")
+OCCS<-read.table("./sam_counts/OCCS_coral_sam.counts")
+OCDS<-read.table("./sam_counts/OCDS_coral_sam.counts")
+OCFS<-read.table("./sam_counts/OCFS_coral_sam.counts")
+
+cts<-full_join(OCAA,OCBA, by="V1") # full_join merges all the data even if there's a gene found in A and that isn't in B and vice versa, missing data are given NA) 
+cts<-full_join(cts,OCCA, by="V1")
+cts<-full_join(cts,OCDA, by="V1")
+cts<-full_join(cts,OCFA, by="V1")
+cts<-full_join(cts,OCAS, by="V1")
+cts<-full_join(cts,OCBS, by="V1")
+cts<-full_join(cts,OCCS, by="V1")
+cts<-full_join(cts,OCDS, by="V1")
+cts<-full_join(cts,OCFS, by="V1")
+
+#Fix Column headers 
+colnames(cts)<-c("contig","OCAA", "OCBA", "OCCA", "OCDA", "OCFA", "OCAS", "OCBS", "OCCS", "OCDS", "OCFS")
+
+#Make NAs zeros
+cts[is.na(cts)]<-0
+
+#Read in gene annotations
+gg=read.delim("coral_gene_names.tab",sep="\t", header=FALSE)
+colnames(gg)<-c("contig","genename")
+
+# removing A. thaliana genes from counts
+cts<-left_join(cts,gg, by="contig")
+cts<-cts[grep("thaliana", cts$genename, invert=TRUE),]
+
+#Name columns and remove gene and genename column
+rownames(cts)<-cts$contig
+cts<-cts[,2:11]
+```
+
+## Checking for outliers using ArrayQualityMetrics {.tabset}
+Runs array quality metrics on count data to detect whether there are samples that should be considered outliers due to libary sizes and other metrics. Aposymbiotic samples are shown in red, symbiotic in blue. The package outputs pdf and png files into a specified directory so output graphs are imported here. 
+
+```{r 'Array qualitymetrics to check outliers'}
+# Running Array Quality Metrics to look at data #### 
+# Uses DESeq 1
+library(DESeq)
+real=DESeq::newCountDataSet(cts,coldata) 
+real=DESeq::estimateSizeFactors(real)
+cds=DESeq::estimateDispersions(real, method="blind")
+vsdBlind=DESeq::varianceStabilizingTransformation(cds) # need to call DESeq 1 and not 2 here. 
+arrayQualityMetrics(vsdBlind,intgroup=c("SymbiontState"), force=TRUE, outdir = "arrayQualityMetrics") 
+```
+
+### <span style="color: #0072B2;">**Library Sizes**</span>
+<center>
+![](./arrayQualityMetrics/size_factors.png)
+</center>
+Size factors of each library (sample). We don't see any large discrepancies between samples and the overall y axis scale is small. 
+
+### <span style="color: #0072B2;">**AQM outliers by array distances**</span>
+<center>
+![](./arrayQualityMetrics/out hm.png)
+</center>
+Shows a bar chart of the sum of distances to other arrays. The bars are shown in the original order of the arrays. Based on the distribution of the values across all arrays, a threshold is automatically determined by the package, and is indicated by the black vertical line. No outliers (samples crossing the threshold) were detected.
+
+### <span style="color: #0072B2;">**Standard deviation vs mean of variance stabalized count data**</span>
+<center>
+![](./arrayQualityMetrics/msd.png)
+</center>
+Shows a density plot of the standard deviation of the intensities across arrays on the y-axis versus the rank of their mean on the x-axis. The red dots, connected by lines, show the running median of the standard deviation. After normalization and transformation to a logarithm(-like) scale, one typically expects the red line to be approximately horizontal, that is, show no substantial trend, which in this case it does.
+
+## DESeq2 analyses {.tabset}
+<b>Methods</b>: Expression data were inspected for outliers using the arrayqualitymetrics package (Kauffmann et al. 2009) and no outliers were detected. Only genes with at least 10 counts were retained (N=25,428). Differentially expressed genes (DEGs) were identified using DESeq2 v. 1.26.0 (Love et al., 2014) in R, with the model: design = ~ Genet ID + SymbiontState. A contig was considered significantly differentially expressed if it had an FDR adjusted q-value < 0.10 (N=196). 
+
+Data were normalized using the rlog transformation function in DESeq2. Normalized data were analyzed via principal components using the prcomp() function in R. The effect of genet and symbiont state was tested with a PERMANOVA using the adonis() function in the R package vegan with Euclidean distances between samples. A heatmap of significantly differentially expressed genes was generated with the pheatmap R package. 
+
+```{r 'DESeq main analyses'}
+## Running DESeq2 
+dds<-DESeq2::DESeqDataSetFromMatrix(countData = cts, colData = coldata, design=~Genet+SymbiontState)
+
+# pre-filtering to remove low count genes 
+keep <- rowSums(counts(dds)) >= 10
+dds <- dds[keep,]
+
+ddsMF<-DESeq2::DESeq(dds)
+resMF<-results(ddsMF)
+resMF
+# default contrast is Sym vs. Apo since Apo is first alphabetically 
+# this means that gene up regulated will be up in Sym 
+
+summary(resMF)
+# how many adjusted p values were less than 0.1
+sum(resMF$padj<0.1, na.rm=TRUE) # 196 
+# standard p value less that 0.05
+sum(resMF$pvalue<0.05, na.rm=TRUE) 
+conds05<-filter(as.data.frame(resMF), pvalue<0.05) # 1423 (this will be relevant for GOMWU later)
+
+write.table(resMF, file="./deseq2/Sym_vs_Apo_collapsed.txt", quote=F, sep="\t")
+valState=cbind(resMF$pvalue, resMF$padj)
+head(valState)
+colnames(valState)=c("pval.state", "padj.state")
+rownames(valState)<-rownames(resMF)
+
+# transform the data for plotting 
+rlogMF=rlogTransformation(dds, blind=TRUE) 
+rld=assay(rlogMF)
+colnames(rld)<-paste(coldata$Genet, coldata$SymbiontState, sep="_")
+
+rldpvals=cbind(rld,valState)
+head(rldpvals)
+dim(rldpvals)
+# [1] 25094    12
+table(complete.cases(rldpvals))
+# FALSE  TRUE 
+# 487 24607 
+# that's the 487 low count genes so all good
+
+#write.csv(rldpvals, "./deseq2/April2020_RLDandPVALS_State_noE_collapsed_mapped.csv", quote=F)
+
+rld_data<-as.data.frame(rldpvals)
+
+##### Heat map of DEGs 
+adjpval=0.10 # FDR cutoff
+conds=filter(rld_data, padj.state<adjpval)
+
+# remove pval data 
+degs=conds[,1:10]
+degs$contig<-rownames(degs)
+degs<-left_join(degs, gg, by="contig") # add in genenames from annotations file
+#write.table(degs, file="deg_list_exp.txt", quote=FALSE, row.names = FALSE, sep = "\t")
+#rename NAs to unknowns
+degs$genename = factor(degs$genename, levels=c(levels(degs$genename), "unknown"))
+degs$genename[is.na(degs$genename)]<-"unknown"
+#get rid of species designation on the genename 
+degs$genename<-sub("\\..*", "", degs$genename)
+genets<-rep(c("A","B", "C", "D", "F"), 2)
+
+degs_plot<-filter(degs, genename!="unknown")
+
+ccol<-rev(colorRampPalette(brewer.pal(n=11, name="BrBG"))(80))
+ccol2<-rev(colorRampPalette(brewer.pal(n=11, name="RdYlBu"))(50))
+
+pheatmap(degs_plot[,1:10], show_rownames=T, labels_row=degs_plot$genename,
+         show_colnams = T, angle_col= "0",
+         cellheight = 6, cellwidth = 8, fontsize_row=5, cluster_cols=T, scale='row', fontsize_col=8,
+         cluster_rows = T, color=ccol2, cutree_rows = 2, cutree_cols = 2, labels_col = genets,
+         treeheight_col = 10, treeheight_row = 10, legend=T,
+         filename="./figures/heatmap_DEGs_annotonly.png", width=8, height=15)
+
+## heat map of only glutamine-associated DEGs 
+
+glut_degs<-droplevels(as.data.frame(degs[grepl("glut", degs$genename, ignore.case = TRUE),]))
+pheatmap(glut_degs[,1:10], 
+         show_rownames=T, labels_row=glut_degs$genename,fontsize_row=5, scale='row',cluster_rows = T, 
+         show_colnams = T, angle_col= "0",cluster_cols=T, fontsize_col=8, labels_col = genets,
+         cellheight = 6, cellwidth = 8,  
+         color=ccol, cutree_rows = 2, cutree_cols = 2, 
+         treeheight_col = 5, treeheight_row = 5, legend=T,
+         filename="./figures/glut_DEGs.png", width=5, height=5)
+
+## heat map of only acly-coA and other nutrient transporter-assocociated DEGs 
+sug_lip_degs<-droplevels(as.data.frame(degs[grepl("acyl-|acyltrans|fatty|solute|lipid|cholesterol|apolipo|myo-inositol", degs$genename, ignore.case = TRUE),]))
+pheatmap(sug_lip_degs[,1:10], 
+         show_rownames=T, labels_row=sug_lip_degs$genename,fontsize_row=5, scale='row',cluster_rows = T, 
+         show_colnams = T, angle_col= "0",cluster_cols=T, fontsize_col=8, labels_col = genets,
+         cellheight = 6, cellwidth = 8,  
+         color=ccol, cutree_rows = 2, cutree_cols = 2, 
+         treeheight_col = 5, treeheight_row = 5, legend=T,
+         filename="./figures/sug_lip_DEGs.png", width=5, height=5)
+
+### PCA's 
+pca = prcomp(t(assay(rlogMF)), center = TRUE, scale. = FALSE)
+adonis(pca$x~Genet+SymbiontState,data=coldata, method = 'eu')
+
+fullpca<-as.data.frame(pca$x)
+fullpca$Sample<-row.names(fullpca)
+fullpca<-cbind(fullpca, coldata)
+
+(a<-ggplot(fullpca, aes(PC1, PC2, shape=Genet)) +
+  geom_hline(yintercept =0)+geom_vline(xintercept =0) +
+  geom_point(aes(colour=SymbiontState,fill=SymbiontState, stroke=1.1), size=7)+
+  xlab(paste0("PC1 (44.1%)")) + # from summary(pca)
+  ylab(paste0("PC2 (15.4%)")) + 
+  theme_bw()+
+  scale_shape_manual(values=c(21,22,23,24,25), guide=guide_legend(override.aes = list(size = 4)))+
+  scale_fill_manual(values=c("#80CDC1", "#BF812D"))+
+  scale_colour_manual(values=c("#003C30", "#543005"),
+                      labels=c("Aposymbiotic", "Symbiotic"), 
+                      guide=guide_legend(override.aes = list(size = 4,colour = c("#80CDC1", "#BF812D"))))+
+  annotate("text", x=30, y=40, label=paste("italic(Adonis) * ' p'[Genet]<0.01"), parse=TRUE)+
+  annotate("text", x=30, y=45, label=paste("italic(Adonis) * ' p'[Branch]>0.2"), parse=TRUE)+
+  theme(panel.grid.minor=element_blank(), 
+        panel.border = element_rect(colour="black", fill=NA, size=1.5), 
+        axis.text = element_text(face="bold", colour="black", size=8),
+        legend.position = "bottom",
+        legend.background = element_rect(colour="grey"),
+        legend.text = element_text(face="bold", colour="black", size=8),
+        axis.title = element_text(face="bold", colour = "black", size=10),
+        legend.title = element_text(face="bold", colour="black", size=10))+
+  labs(shape="Colony", colour="Branch")+ guides(fill=FALSE))
+
+
+# PCA of DEGs
+rlogMF_deg<-rlogMF[rownames(conds),]
+pca_degs = prcomp(t(assay(rlogMF_deg)), center = TRUE, scale. = FALSE)
+
+adonis(pca_degs$x~Genet+SymbiontState,data=coldata,  method = 'eu')
+
+pca_degs_df<-as.data.frame(pca_degs$x)
+pca_degs_df$Sample<-row.names(pca_degs_df)
+pca_degs_df<-cbind(pca_degs_df, coldata)
+
+
+(b<-ggplot(pca_degs_df, aes(PC1, PC2)) +
+  geom_hline(yintercept =0)+geom_vline(xintercept =0) +
+  geom_point(aes(color=SymbiontState, fill=SymbiontState, shape=Genet, stroke=1.1), size=7)+
+  stat_ellipse(geom="polygon", aes(fill=SymbiontState), alpha=0.3)+
+  xlab(paste0("PC1 (63.5%)")) + # from summary(pca_degs)
+  ylab(paste0("PC2 (16.5%)")) +
+  theme_minimal()+
+  scale_shape_manual(values=c(21,22,23,24,25))+
+  scale_fill_manual(values=c("#80CDC1", "#BF812D"))+
+  scale_colour_manual(values=c("#003C30", "#543005"),
+                      labels=c("Aposymbiotic", "Symbiotic"), 
+                      guide=guide_legend(override.aes = list(size = 4,colour = c("#80CDC1", "#BF812D"))))+
+  annotate("text", x=13, y=13.5, label=paste("italic(Adonis) * ' p'[Genet]<0.01"), parse=TRUE)+
+  annotate("text", x=13, y=12, label=paste("italic(Adonis) * ' p'[Branch]<0.01"), parse=TRUE)+
+  theme(panel.grid.minor=element_blank(),
+        panel.border = element_rect(colour="black", fill=NA, size=1.5),
+        axis.text = element_text(face="bold", colour="black", size=8),
+        legend.position = "bottom",
+        legend.background = element_rect(colour="grey"),
+        legend.text = element_text(face="bold", colour="black", size=8),
+        axis.title = element_text(face="bold", colour = "black", size=10),
+        legend.title = element_text(face="bold", colour="black", size=10))+
+  labs(shape="Colony", colour="Branch")+guides(fill=FALSE)+
+  guides(shape = guide_legend(override.aes = list(size = 4)),
+         colour = guide_legend(override.aes = list(size = 4))))
+
+
+ggarrange(a, b, ncol=2, nrow=1, common.legend = TRUE, legend = "bottom", labels="AUTO")+
+  theme(plot.margin = margin(0,0,2,0))
+ggsave("./figures/Fig2_new.png", dpi=300, height=6, width=10, units="in")
+
+
+```
+
+
+### <span style="color: #0072B2;">**Figure 2. **</span>
+![](./figures/Fig2_new.png)
+**Figure 2.** Principal component analyses of rlog transformed counts for (A) all genes and, (B) genes identified as differentially expressed by symbiotic state in DESeq2 (N=196, FDR<0.1). PERMANOVA results for the effect of genetic background and symbiotic state (branch) are included. 
+
+### <span style="color: #0072B2;">**Figure 3. **</span>
+![](./figures/Fig3.png)
+**Figure 3.** Significantly differentially expressed genes (FDR<0.1) involved in glutamine production (A) and sugar or lipid transport/ production (B). Color scale represents the gene’s log2 fold change. Colors are scaled within rows. Warm tones represent up-regulation (higher expression in symbiotic samples/lower in aposymbiotic) and cool tones down-regulation (lower expression in symbiotic samples/higher in aposymbiotic samples). Rows and columns are clustered hierarchically using Pearson correlation of their expression across genes and samples, respectively. Columns clearly clustered aposymbiotic and symbiotic samples. Genet ID is shown at the bottom of each column. Genes detailed here are also found in Figure S3, which shows a heatmap of all significantly differentially expressed genes. 
+
+### <span style="color: #0072B2;">**Figure S3. **</span>
+![](./figures/FigS3.png)
+**Figure S3.** Heatmap of significantly differentially expressed genes identified by DESeq2 (FDR<0.1). Unannotated genes are omitted for visualization purposes. Rows are genes and columns are samples. Color scale is the log2 fold change. Colors are scaled within rows. Warm tones represent up-regulation (higher expression in symbiotic samples/lower in aposymbiotic) and cool tones down-regulation (lower expression in symbiotic samples/higher in aposymbiotic samples). Rows and columns are clustered hierarchically using Pearson correlation of their expression across genes and samples, respectively. Columns clustered with all aposymbiotic samples (teal bar) on the left and all symbiotic (brown bar) samples on the right. Genet ID is shown at the bottom of each column.
+
+
+## Gene Ontology (GO) enrichment analyses 
+Methods: To determine whether global gene expression patterns showed enrichment of different gene ontology (GO) classes, the collection of scripts ‘GO_MWU’ was used (https://github.com/z0on/GO_MWU). Here, the gene ontology database annotations (go.obo downloaded in March 2019) was used to test for enrichment of GO terms based on the ranked -log signed p-values of each gene. Gene ontology terms that are over-represented or under-represented are then visualized in a tree format that groups similar GO terms. GO enrichment function of only the genes that were significantly differentially expressed (N=196) was also conducted in a similar manner but using the binary, Fisher’s exact test version of GO_MWU, where genes that were differentially expressed were assigned a 1 and all other genes in the transcriptome a 0.
+
+Figures for this part of the analysis are not displayed here due to their length. See supplementary materials. 
+```{r 'GO Ontology Enrichment - Signed log p values'}
+#generate the heats data for GOWMU
+heats<-mutate(as.data.frame(resMF),negP=-log(pvalue))
+heats<-mutate(heats,signedlogP=case_when(log2FoldChange<0 ~ negP*-1, log2FoldChange>0 ~ negP))
+heats$genes<-rownames(resMF)
+heats<-select(heats, signedlogP, genes)
+heats<- heats[,c("genes", "signedlogP")]
+write.table(heats, "PVals_GOWMU_Collapsed.csv", sep=",", row.names = FALSE, quote=FALSE)
+
+# two columns of comma-separated values: gene id, continuous measure of significance. 
+input="PVals_GOWMU_Collapsed.csv"
+goAnnotations="coral_gene_GOannot.tab" # two-column, tab-delimited, one line per gene, multiple GO terms separated by semicolon. 
+goDatabase="go_Mar_2019.obo"
+#download from http://www.geneontology.org/GO.downloads.ontology.shtml
+goDivision="BP" # either MF, or BP, or CC
+source("gomwu.functions.R")
+
+#Biological Processes
+gomwuStats(input, goDatabase, goAnnotations, goDivision,
+           perlPath="perl",
+           largest=0.1,
+           smallest=10,   # a GO category should contain at least this many genes to be considered, was increased from default due to the large number of BP GO terms that were significant
+           clusterCutHeight=0.35  # cutoff in relatedness of GO terms to merge categories, was increased from default due to the large number of BP GO terms that were significant
+           )
+
+# Plotting results
+quartz()
+results_BP=gomwuPlot(input,goAnnotations,goDivision,
+                  absValue=-log(0.05,10),  # genes with the measure value exceeding this will be counted as "good genes". Specify absValue=0.001 if you are doing Fisher's exact test for standard GO enrichment or analyzing a WGCNA module (all non-zero genes = "good genes").
+                  level1=0.01, # FDR threshold for plotting. Specify level1=1 to plot all GO categories containing genes exceeding the absValue.(italic font)
+                  level2=0.001, # FDR cutoff to print in regular (not italic) font.
+                  level3=0.00001, # FDR cutoff to print in large bold font.
+                  txtsize=0.8,    # decrease to fit more on one page, or increase (after rescaling the plot so the tree fits the text) for better "word cloud" effect
+                  treeHeight=0.4, # height of the hierarchical clustering tree
+                  colors=c("#35978F","#BF812D","#01665E","#8C510A") # first color is down reg, big and middle font color, then up reg big and middle font, then down italic, then up reg italic. 
+)
+# Fig S4
+quartz.save(file="FigS4.png",type="png", width = 8, height = 80, dpi = 300 )
+# Table S2 
+write.csv(results_BP, file="TableS2.csv", quote=TRUE, row.names = TRUE)
+
+
+goDivision="MF" # either MF, or BP, or CC
+gomwuStats(input, goDatabase, goAnnotations, goDivision,
+           perlPath="perl",
+           largest=0.1,
+           smallest=10,
+           clusterCutHeight=0.25)
+
+# Plotting results
+quartz()
+results_MF=gomwuPlot(input,goAnnotations,goDivision,
+                  absValue=-log(0.05,10),
+                  level1=0.01, # italic font
+                  level2=0.001, # FDR cutoff to print in regular (not italic) font.
+                  level3=0.00001, # FDR cutoff to print in large bold font.
+                  txtsize=0.8,    
+                  treeHeight=0.4, 
+                  colors=c("#35978F","#BF812D","#01665E","#8C510A") # first color is down reg, big and middle font color, then up reg big and middle font, then down italic, then up reg italic. 
+)
+# Fig S5
+quartz.save(file="FigS5.png",type="png", width = 8, height = 40, dpi = 300, bg="white")
+#Table S3
+write.csv(results_MF, file="TableS3.csv", quote=TRUE, row.names = TRUE)
+
+goDivision="CC" # either MF, or BP, or CC
+
+gomwuStats(input, goDatabase, goAnnotations, goDivision,
+           perlPath="perl",
+           largest=0.1,
+           smallest=5,
+           clusterCutHeight=0.25)
+
+quartz()
+results_CC=gomwuPlot(input,goAnnotations,goDivision,
+                  absValue=-log(0.05,10),
+                  level1=0.01, # italic font
+                  level2=0.001, # FDR cutoff to print in regular (not italic) font.
+                  level3=0.00001, # FDR cutoff to print in large bold font.
+                  txtsize=0.8,    
+                  treeHeight=0.4, 
+                  colors=c("#35978F","#BF812D","#01665E","#8C510A") # first color is down reg, big and middle font color, then up reg big and middle font, then down italic, then up reg italic. 
+)
+# Fig S6
+quartz.save(file="FigS6.png",type="png", width = 4, height = 20, dpi = 300, bg="white")
+#Table S4
+write.csv(results_CC, file="TableS4.csv", quote=TRUE, row.names = TRUE)
+```
+
+## KOG and GO comparisons with other dataset of Apo-Sym organisms {.tabset}
+Methods: To compare our results to other gene expression datasets investigating symbiotic and aposymbiotic states, we conducted a KOG enrichment analysis on our data and two other datasets: the sea anemone <i>Aiptasia pallida</i> (data from Cui et al. 2019), the salamander <i>Ambystoma maculatum</i> (data from Burns et al. 2017). KOG classes represent high level conserved functions of orthologous genes across eukaryotic taxa, thereby facilitating the comparison of functional characteristics of transcriptomic responses across the tree of life. KOG annotations for all the datasets were obtained through eggNOG-mapper v.2 (http://eggnog5.embl.de/#/app/home). KOG enrichment analyses were performed with the KOG_MWU package in R (Dixon et al. 2015). This analysis is analogous to GO_MWU but operates on KOG classes instead of GO terms. We also compared the GO biological processes categories between our dataset and <i>Aiptasia pallida</i> using a delta ranks approach (e.g. Dixon et al. 2021). 
+
+```{r 'Compare KOG annotations differentially regulated across organisms'}
+# read in KOG annotations for each contig, obtained using EGGNOG-mapper (http://eggnog-mapper.embl.de/)
+oc_kog<-read.table("/Users/hannyrivera/Documents/BU/DaviesLab/_Data/Oculina/KOG_data/For_R/input_data/oculina_uniq_kog.tab", header=TRUE)
+aip_kog<-read.table("/Users/hannyrivera/Documents/BU/DaviesLab/_Data/Oculina/KOG_data/For_R/input_data/aiptasia_gene2kogClass.tab", header=TRUE)
+sal_kog<-read.table("/Users/hannyrivera/Documents/BU/DaviesLab/_Data/Oculina/KOG_data/For_R/input_data/sal_kog_contig.txt", header=TRUE)
+
+#get rid of empty terms
+oc_kog%>%filter(term!="")->oc_kog
+aip_kog%>%filter(term!="")->aip_kog
+sal_kog%>%filter(term!="" | !is.na(term))->sal_kog
+
+# Read in signed log p values data for each data set. 
+# These are all coded to be that up regulation means up in symbiotic samples 
+aip_sgp<-read.csv("/Users/hannyrivera/Documents/BU/DaviesLab/_Data/Oculina/KOG_data/For_R/input_data/aiptasia_signedP_heats.csv", header = TRUE)
+ocu_sgp<-read.csv("/Users/hannyrivera/Documents/BU/DaviesLab/_Data/Oculina/KOG_data/For_R/input_data/oculina_signedP_heats.csv", header=TRUE)
+sal_sgp<-read.csv("/Users/hannyrivera/Documents/BU/DaviesLab/_Data/Oculina/KOG_data/For_R/input_data/sal_signedP_heats.csv", header=TRUE)
+
+#run KOGwmu analysis 
+aip_sgp_res<-kog.mwu(aip_sgp, aip_kog)
+oc_sgp_res<-kog.mwu(ocu_sgp, oc_kog)
+sal_sgp_res<-kog.mwu(sal_sgp, sal_kog)
+
+#make combined table of results across taxa
+ktable_aip_oc_sal_sgp=makeDeltaRanksTable(list("Oculina"=oc_sgp_res, "Aiptasia"=aip_sgp_res, "Ambystoma" =sal_sgp_res))
+# Salamander KOGS didn't have cellular motility for whatever reason. There's only a few genes with that annotation in aiptasia and oculina anyways. 
+ktable_aip_oc_sal_sgp$Ambystoma[21]<-0 # setting it to zero 
+# Nuclear structure is also looking really strange because there's only 2-3 genes with that annotation across the datasets, let's drop it. 
+ktable_aip_oc_sal_sgp<-ktable_aip_oc_sal_sgp[!row.names(ktable_aip_oc_sal_sgp) %in% c("Nuclear structure",""),]
+
+# Figure 4A
+pheatmap(as.matrix(ktable_aip_oc_sal_sgp),
+         cellwidth = 20, cellheight = 15, border_color = "grey30",
+         color=rev(colorRampPalette(brewer.pal(n=11, name="BrBG"))(80)),
+         cluster_rows = T, show_rownames = T, fontsize_row=8,  cutree_rows = 6, treeheight_row = 5,
+         cluster_cols = F, show_colnames = T, angle_col= "315",
+         breaks=c(seq(from=-400,to=400,by=10)),scale="none",
+         legend=T, filename="./figures/kog_comparison.pdf", width=6, height=6)
+
+# check the genenames of the oculina genes annotated with defense mechanisms KOG term 
+as.data.frame(droplevels(oc_kog$seq[grepl("Defense", oc_kog$term)]))->oc_def_contigs
+
+
+
+```
+
+
+```{r 'GO Delta Ranks comparisons between Oculina and Aiptasia data'}
+## Running GO MWU on the aiptasia data
+# Aiptasia signed log P GO enrichment 
+input_aip="aiptasia_signedP_heats.csv"
+goAnnotations_aip="aiptasia_gene2go.tab" # two-column, tab-delimited, one line per gene, multiple GO terms separated by semicolon. If you have multiple lines per gene, use nrify_GOtable.pl prior to running this script.
+goDatabase="go_Mar_2019.obo"  
+goDivision="BP" # either MF, or BP, or CC
+
+# gomwuStats(input_aip, goDatabase, goAnnotations_aip, goDivision,
+#            perlPath="perl", 
+#            largest=0.1,  
+#            smallest=10,   # a GO category should contain at least this many genes to be considered
+#            clusterCutHeight=0.35)
+
+## GO Delta ranks comparison 
+aip_goBP=read.table("MWU_BP_aiptasia_signedP_heats.csv",header=T, sep = " ")
+ocu_goBP=read.table("MWU_BP_PVals_GOWMU_Collapsed.csv",header=T, sep = " ")
+
+goods=intersect(aip_goBP$term,ocu_goBP$term)
+
+aip_goBP=aip_goBP[aip_goBP$term %in% goods,]
+ocu_goBP=ocu_goBP[ocu_goBP$term %in% goods,]
+
+# all overlapping GO terms
+ress=merge(aip_goBP,ocu_goBP,by="term")
+
+# GO terms highly significant in both datasets
+sigs=ress[ress$p.adj.x<=0.1 & ress$p.adj.y<=0.1,]
+dim(sigs) # 45 GO terms
+
+# make classification of type of function for coloring GO delta ranks plot 
+sigs$short_name<-sigs$name.x
+str_replace(sigs$short_name, ".* (biosynthetic process)", "\\1")->sigs$short_name
+str_replace(sigs$short_name, ".* (metabolic process)", "\\1")->sigs$short_name
+str_replace(sigs$short_name, ".*chromosome.*", "chromosome/chromatin organization")->sigs$short_name
+str_replace(sigs$short_name, ".*chromatin.*", "chromosome/chromatin organization")->sigs$short_name
+str_replace(sigs$short_name, ".*histone.*", "chromosome/chromatin organization")->sigs$short_name
+str_replace(sigs$short_name, "DNA geometric change", "chromosome/chromatin organization")->sigs$short_name
+str_replace(sigs$short_name, "(cell cycle) .*", "\\1")->sigs$short_name
+str_replace(sigs$short_name, ".*(cell cycle)", "\\1")->sigs$short_name
+str_replace(sigs$short_name, "anaphase.*", "cell cycle")->sigs$short_name
+str_replace(sigs$short_name, "meiotic .*", "cell cycle")->sigs$short_name
+str_replace(sigs$short_name, "mitotic .*", "cell cycle")->sigs$short_name
+str_replace(sigs$short_name, ".*DNA replication.*", "cell cycle")->sigs$short_name
+str_replace(sigs$short_name, ".*(transport).*", "\\1")->sigs$short_name
+str_replace(sigs$short_name, ".*(assembly).*", "organelle assembly")->sigs$short_name
+str_replace(sigs$short_name, ".*(GTPase).*", "GTPase mediated signaling")->sigs$short_name
+str_replace(sigs$short_name, ".*(telomere).*", "telomere regualation")->sigs$short_name
+
+#write table of shorted GO terms
+write.csv(select(sigs, short_name, name.x), file="TableS5.csv", col.names = FALSE, row.names = FALSE, quote=FALSE)
+getwd()
+#with color/label legend
+colors=c("#A6CEE3" ,"#1F78B4" ,"#B2DF8A" ,"#33A02C" ,"#FB9A99" ,"#E31A1C" ,"#FDBF6F" ,"#FF7F00", "#CAB2D6", "#6A3D9A", "#B15928", "darkgoldenrod", "deeppink", "gray42", "gray0")
+
+ggplot(sigs, aes(x=delta.rank.x, y=delta.rank.y))+
+  geom_point(aes(colour=short_name), size=2.5)+
+  geom_hline(yintercept =0)+
+  geom_vline(xintercept =0)+
+  labs(y="*Oculina* GO Delta Rank", 
+       x="*Aiptasia* GO Delta Rank")+
+  scale_colour_manual(values=colors)+
+  labs(colour="General Biological Process", size="# of Transcripts")+
+  theme_bw()+
+  theme(panel.grid.minor=element_blank(), 
+        legend.position = "right",
+        legend.background = element_rect(colour="grey"),
+        legend.text = element_text(face="bold", colour="black", size=8),
+        legend.title = element_text(face="bold", colour="black", size=10),
+        legend.key.size = unit(10,"points"),
+        axis.text = element_text(face="bold", colour="black", size=8),
+        axis.title.x = ggtext::element_markdown(face="bold"),
+        axis.title.y = ggtext::element_markdown(face="bold"))
+ggsave("./figures/Figure4B.png", width=7, height=6, units="in", dpi=300)
+```
+
+### <span style="color: #0072B2;">**Figure 4. **</span>
+![](./figures/Fig4.png)
+**Figure 4.** KOG (left) and GO delta rank (right) comparisons of gene expression differences between aposymbiotic and symbiotic branches in <i>Oculina arbuscula</i> (current study), <i>Exaiptasia pallida</i> (Aiptasia; Cui et al. 2019), and the salamander <i>Ambystoma maculatum</i> (Burns et al. 2018). (A) Delta rank values of KOG classes of gene expression for each dataset based on signed -ln(p values) for differential expression. Warm tones (positive rank values) correspond to classes that were upregulated (higher expression in symbiotic samples). Cool tones (negative rank values) correspond to classes that were downregulated (higher expression in symbiotic samples). (B) Delta rank values of GO Biological process terms that were significantly enriched (p-value<0.05) in both <i>O. arbuscula</i> and <i>E. pallida</i> (Aiptasia) datasets. Positive ranks are GO terms that were associated with up-regulated genes (higher expression in symbiotic samples), while negative ranks were down-regulated. Colors of points correspond to a general Biological Process category. See Table S5 for the full names of terms represented in the figure.   
+
+
+## Session information
+All code was written by [Hanny E. Rivera](https://github.com/hrivera28), feel free to contact with questions.
+Session information from the last run date on `r Sys.Date()`:
+```{r session info, results="asis", eval=TRUE}
+sessionInfo()
+```

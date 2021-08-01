@@ -1,0 +1,11 @@
+Samp	Genet	SymbiontState
+OCAA	A	Apo
+OCBA	B	Apo
+OCCA	C	Apo
+OCDA	D	Apo
+OCFA	F	Apo
+OCAS	A	Sym
+OCBS	B	Sym
+OCCS	C	Sym
+OCDS	D	Sym
+OCFS	F	Sym

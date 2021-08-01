@@ -1,0 +1,230 @@
+Cellular components term,pval,direction
+25/91 protein acetyltransferase complex,2.47382491,1
+109/375 ubiquitin ligase complex,2.664302628,1
+25/54 nuclear ubiquitin ligase complex,2.383961511,1
+7/22 cytoplasmic exosome (RNase complex),2.311079911,1
+12/34 exosome (RNase complex),2.395756403,1
+36/83 nuclear chromosome,3.421364049,1
+25/60 endopeptidase complex,2.036992156,1
+52/112 kinetochore,14.76560358,1
+31/69 condensed chromosome kinetochore,8.514721716,1
+"8/17 condensed chromosome, centromeric region",3.472563079,1
+"6/10 condensed nuclear chromosome, centromeric region",2.421494953,1
+"49/125 chromosome, telomeric region",12.45824807,1
+"26/65 nuclear chromosome, telomeric region",5.346500233,1
+101/267 chromatin,14.10013865,1
+52/148 nuclear chromatin,7.599746504,1
+18/51 heterochromatin,2.921687727,1
+30/72 condensed chromosome,2.848495086,1
+8/16 synaptonemal complex,4.137710864,1
+4/5 lateral element,2.055991579,1
+37/146 P-body,2.155225194,0
+14/38 microfibril,3.079287141,0
+20/75 fibrillar center,2.29681069,1
+4/5 zona pellucida receptor complex,2.148423953,1
+415/1258 extracellular region,15,0
+51/139 collagen trimer,4.495554313,0
+7/18 anchoring collagen complex,2.11855281,0
+68/225 basement membrane,7.658614554,0
+285/949 extracellular space,15,0
+9/31 nuclear envelope lumen,3.136081594,0
+26/72 nuclear pore,6.827199972,1
+562/1774 nucleoplasm,15,1
+19/54 replication fork,2.29126552,1
+7/12 nuclear origin of replication recognition complex,2.661988797,1
+16/26 anaphase-promoting complex,5.615543851,1
+64/200 spliceosomal complex,6.829398226,1
+112/279 chromosome,14.992073,1
+9/24 nuclear heterochromatin,2.694913279,1
+11/18 pericentric heterochromatin,2.969481357,1
+238/702 nucleolus,15,1
+13/24 small nucleolar ribonucleoprotein complex,2.590185809,1
+347/1104 mitochondrion,14.8655368,1
+137/359 organelle inner membrane,8.544809211,1
+11/33 mitochondrial respiratory chain complex I,2.909398531,1
+62/239 mitochondrial matrix,3.412741132,1
+7/37 mitochondrial large ribosomal subunit,3.623513009,1
+7/20 mitochondrial small ribosomal subunit,3.847817475,1
+176/661 endosome,5.047378117,0
+90/325 early endosome,2.800752704,0
+13/35 peroxisomal matrix,2.263999448,1
+19/53 Golgi lumen,2.952961818,0
+157/507 centrosome,9.638422187,1
+62/227 microtubule organizing center part,9.638422187,1
+220/775 microtubule organizing center,8.039611904,1
+10/12 chaperonin-containing T-complex,4.948252692,1
+12/26 mRNA cleavage factor complex,2.048692509,1
+27/80 axonemal dynein complex,2.87073192,1
+213/647 supramolecular fiber,4.819548619,1
+93/298 microtubule associated complex,10.06477423,1
+419/1317 intrinsic component of plasma membrane,15,0
+23/58 voltage-gated calcium channel complex,4.306544688,0
+14/36 acetylcholine-gated channel complex,4.192235322,0
+34/82 caveola,3.673156626,0
+120/416 cell-cell junction,8.483857147,0
+100/392 anchoring junction,7.313239997,0
+35/127 cell-cell adherens junction,2.600118246,0
+160/496 cilium,9.106008396,1
+61/141 axoneme,14.19602956,1
+101/369 cytoplasmic region,4.919844953,0
+36/135 exocytic vesicle,2.329014045,0
+29/104 potassium channel complex,6.991266438,0
+6/10 cohesin complex,3.111839034,1
+12/25 neurotransmitter receptor complex,2.096304029,0
+35/121 external side of plasma membrane,4.567324601,0
+32/94 cytoplasmic side of membrane,5.016648475,0
+123/429 cell surface,14.09324725,0
+81/267 postsynaptic density,3.329688899,0
+17/41 Cajal body,3.608108966,1
+9/23 translation preinitiation complex,2.664302628,1
+86/295 basolateral plasma membrane,2.599647086,0
+101/344 apical plasma membrane,14.19602956,0
+164/551 nuclear body,13.5388116,1
+29/99 PML body,4.880955028,1
+76/297 nuclear speck,2.979933053,1
+20/40 cytosolic large ribosomal subunit,4.342400001,0
+22/48 cytosolic small ribosomal subunit,4.641991496,0
+8/43 sarcomere,2.488311445,0
+35/125 Z disc,3.154017717,0
+333/1171 cell junction,15,0
+51/209 cell-substrate junction,3.26133042,0
+5/7 mitochondrial crista,2.458722334,1
+43/193 transport vesicle,2.844573179,0
+16/57 intrinsic component of synaptic vesicle membrane,2.11855281,0
+50/165 dynein complex,8.79457425,1
+134/501 axon,14.98768883,0
+161/573 dendrite,14.99999999,0
+40/132 transport vesicle membrane,2.18676542,0
+163/570 vesicle membrane,8.885932467,0
+50/196 secretory granule membrane,5.417943012,0
+39/92 endocytic vesicle membrane,2.514435334,0
+21/79 exocytic vesicle membrane,2.397729215,0
+16/51 axolemma,3.540064471,0
+33/94 preribosome,4.082514715,1
+51/134 RNA polymerase complex,4.245330742,0
+7/10 SUMO ligase complex,3.905673227,1
+25/102 anchored component of membrane,4.03407078,0
+98/369 cell projection membrane,9.418078555,0
+53/186 leading edge membrane,7.934712642,0
+5/8 replication fork protection complex,2.488311445,1
+8/22 intrinsic component of mitochondrial inner membrane,2.495080138,1
+37/74 RNA-directed RNA polymerase complex,14.9970589,0
+362/1352 intracellular vesicle,13.12397292,0
+15/61 M band,3.946145954,0
+69/223 cullin-RING ubiquitin ligase complex,3.717646105,1
+78/193 motile cilium,11.49683659,1
+5/9 telomeric heterochromatin,2.102173594,1
+81/251 nuclear membrane,2.314160654,1
+176/515 mitochondrial membrane,8.146066219,1
+22/58 small-subunit processome,2.11855281,1
+10/24 mismatch repair complex,5.290051684,1
+19/72 stereocilium,3.17785996,0
+10/31 stereocilium bundle,3.799007434,0
+12/35 apical lamina of hyaline layer,4.335671119,0
+31/100 neuron projection membrane,8.435357392,0
+7/28 dendrite membrane,4.118848989,0
+10/34 neuronal cell body membrane,3.958359284,0
+7/27 paranodal junction,2.98449822,0
+111/429 axon part,8.666323551,0
+10/36 paranode region of axon,2.933503052,0
+8/18 chromatoid body,2.056748537,1
+8/13 Pwp2p-containing subcomplex of 90S preribosome,3.49155539,1
+13/36 nuclear periphery,2.326541468,1
+120/352 transporter complex,15,0
+85/251 cation channel complex,13.96523729,0
+31/80 calcium channel complex,3.914349453,0
+12/46 chloride channel complex,5.345149651,0
+"6/12 phosphatidylinositol 3-kinase complex, class III",2.002517905,1
+27/97 methyltransferase complex,5.724142043,1
+12/37 CD40 receptor complex,3.325618968,0
+36/169 ciliary basal body,2.459935703,1
+15/31 G protein-coupled receptor complex,8.646941023,0
+5/8 nematocyst,2.26405132,0
+6/19 nuclear inclusion body,2.05430781,1
+12/17 MCM complex,4.950511198,1
+47/194 microbody,3.242489637,1
+11/27 zymogen granule membrane,2.445760069,0
+12/44 nucleoid,2.445760069,1
+30/82 presynaptic membrane,7.276759112,0
+343/1196 neuron projection,15,0
+142/476 cell body,11.75332021,0
+15/58 terminal bouton,2.692377248,0
+40/134 neuron spine,4.542201914,0
+7/33 dendritic shaft,6.005977319,0
+52/167 perikaryon,3.09119388,0
+127/381 receptor complex,15,0
+12/26 juxtaparanode region of axon,2.257720265,0
+31/100 neuron projection terminus,3.237208226,0
+51/137 extracellular matrix component,8.945433015,0
+309/826 chromosomal part,15,1
+267/878 mitochondrial part,14.99999737,1
+521/1727 cytoskeletal part,14.99998925,1
+295/1146 cytoplasmic vesicle part,8.415174363,0
+182/581 ciliary part,6.383262411,1
+40/111 axoneme part,5.616012442,1
+53/205 contractile fiber part,4.906378348,0
+256/888 nucleoplasm part,15,1
+44/133 nucleolar part,8.247758875,1
+128/354 nuclear chromosome part,15,1
+55/168 mitochondrial membrane part,10.24101422,1
+313/1034 synapse part,15,0
+7/14 nuclear pore nuclear basket,3.408818046,1
+45/120 plasma membrane raft,5.208419424,0
+7/17 pronucleus,2.664220454,1
+124/339 membrane region,14.73690559,0
+42/103 apical part of cell,2.113289958,0
+229/817 synapse,15,0
+90/272 postsynaptic membrane,9.422523656,0
+4/21 presynaptic active zone membrane,2.874204057,0
+14/59 DNA-directed RNA polymerase complex,2.354271606,1
+3/5 cortical granule,2.190415139,0
+4/9 sperm head,2.121017844,0
+198/617 extracellular matrix,15,0
+226/746 extracellular organelle,10.93901992,0
+21/94 ATPase complex,5.115469718,1
+17/42 cell body fiber,7.366657624,0
+35/97 catalytic step 2 spliceosome,4.542201914,1
+13/27 pi-body,3.991806641,1
+4/7 perineuronal net,2.055991579,0
+32/83 site of DNA damage,7.949835493,1
+125/395 synaptic membrane,14.99994526,0
+9/33 INO80-type complex,2.351486523,1
+65/214 side of membrane,9.274548307,0
+23/54 intrinsic component of mitochondrial membrane,4.257240825,1
+391/1388 plasma membrane region,15,0
+29/73 Schaffer collateral - CA1 synapse,9.23413568,0
+104/255 chromosomal region,2.85530687,1
+75/230 presynapse,6.138030287,0
+60/208 postsynapse,6.706590088,0
+315/1042 membrane protein complex,12.94575087,0
+170/495 plasma membrane protein complex,15,0
+51/185 mitochondrial protein complex,14.71720184,1
+6/15 outer mitochondrial membrane protein complex,2.446664014,1
+20/87 inner mitochondrial membrane protein complex,3.847817475,1
+58/151 plasma membrane receptor complex,14.88207008,0
+304/1191 whole membrane,2.3090956,0
+42/176 actin-based cell projection,4.627023308,0
+24/75 cluster of actin-based cell projections,2.232561385,0
+5/10 perisynaptic extracellular matrix,2.145215931,0
+108/357 glutamatergic synapse,12.95073074,0
+27/88 GABA-ergic synapse,6.054686904,0
+11/54 neuron to neuron synapse,2.316633652,0
+19/91 tethering complex,2.227248876,1
+42/118 integral component of postsynaptic membrane,6.209429326,0
+42/111 intrinsic component of presynaptic membrane,9.792639599,0
+10/42 integral component of postsynaptic specialization membrane,2.148423953,0
+54/160 intrinsic component of synaptic membrane,8.388922068,0
+67/254 secretory vesicle,4.094222058,0
+11/17 chaperone complex,5.668572343,1
+487/1703 plasma membrane bounded cell projection part,8.669073803,0
+489/1522 catalytic complex,15,1
+16/43 GABA receptor complex,9.1372952,0
+7/23 GABA-A receptor complex,3.935983578,0
+6/23 periciliary membrane compartment,3.242489637,0
+31/87 oxidoreductase complex,2.488311445,1
+280/867 transferase complex,5.568967658,1
+21/66 DNA repair complex,8.79974767,1
+9/27 Wnt-Frizzled-LRP5/6 complex,3.464071941,0
+288/915 ribonucleoprotein complex,6.928928039,1
+9/35 Wnt signalosome,2.730698517,0
+216/701 unknown,3.421364049,1
